@@ -8,8 +8,13 @@ app = Flask(__name__)
 
 @app.route('/')
 @app.route('/index')
-def post():
+def get_data():
+	server = 'api.groupme.com'
+	path = '/v3/groups/56509665/messages'
+	params = '?limit=100'
 
+	connection = client.HTTPSConnection(server)
+	return connection.request('GET', path + params)
 
 # Start app
 port = 5000
