@@ -1,17 +1,26 @@
+import json
+from http import client
+import os
+import requests
 
+# Load the configuration variables
+configs = json.load(open('config.json', 'r'))
 
 # Declare variables
-token = '#####'
+token = configs['token']
 pageSize = 100
 oldestID = -1
 
 # Request parameters
 server = 'api.groupme.com'
-path = '/v3/groups/#######/messages'
+path = '/v3/groups/' + configs['groupme-id'] + '/messages'
 connection = client.HTTPSConnection(server)
 
 # Open output file
-fileName = 'messages.json'
+if not os.path.exists(configs['path']):
+	os.makedirs(configs['path'])
+
+fileName = configs['path'] + '/messages.json'
 file = open(fileName, 'w')
 file.truncate(0)
 
@@ -21,6 +30,7 @@ def getMessageIDbyIndex(messages, index):
 
 # Loop through pages of GroupMe messages using the GroupMe developer's API
 data = []
+print("Beginning Download...")
 while True:
 
     params = '?'+ 'token=' + token + '&limit=' + str(pageSize)
@@ -38,3 +48,4 @@ while True:
 # Write JSON data to local .json file
 file.write(json.dumps(data))
 file.close()
+print("Download Finished!")
