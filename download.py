@@ -16,14 +16,6 @@ server = 'api.groupme.com'
 path = '/v3/groups/' + configs['groupme-id'] + '/messages'
 connection = client.HTTPSConnection(server)
 
-# Open output file
-if not os.path.exists(configs['path']):
-	os.makedirs(configs['path'])
-
-fileName = configs['path'] + '/messages.json'
-file = open(fileName, 'w')
-file.truncate(0)
-
 # Helper function for reading the id by index in the response
 def getMessageIDbyIndex(messages, index):
     return messages[index]['id']
@@ -44,6 +36,16 @@ while True:
     messages = response.json()['response']['messages']
     data.extend(messages)
     oldestID = getMessageIDbyIndex(messages,-1)
+
+
+# Open output file
+fullPath = configs['path'] + '/' + configs['groupme-id']
+if not os.path.exists(fullPath):
+	os.makedirs(fullPath)
+
+fileName = fullPath + '/messages.json'
+file = open(fileName, 'w')
+file.truncate(0)
 
 # Write JSON data to local .json file
 file.write(json.dumps(data))

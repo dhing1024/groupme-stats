@@ -4,7 +4,9 @@ import os
 import requests
 import pprint
 
-def get_groups():
+# Save to a groups.json
+def get_all_groups():
+
 	# Load the configuration variables
 	configs = json.load(open('config.json', 'r'))
 	token = configs['token']
@@ -13,10 +15,6 @@ def get_groups():
 	server = 'api.groupme.com'
 	path = '/v3/groups'
 	connection = client.HTTPSConnection(server)
-
-	fileName = 'groups.json'
-	file = open(fileName, 'w')
-	file.truncate(0)
 
 	# Loop through pages of GroupMe messages using the GroupMe developer's API
 	data = []
@@ -29,22 +27,24 @@ def get_groups():
 		if response.status_code != 200:
 			break
 		groups = response.json()['response']
-		print(type(groups[0]))
 		for i in range(len(groups)):
 			newData = {groups[i]['group_id'] : groups[i]['name']}
-		data.append(newData)
-
-		#data.extend(groups)
+			data.append(newData)
 		pageNum += 1
 
+	# Create new file and write to local file
+	fileName = 'groups.json'
+	file = open(fileName, 'w')
+	file.truncate(0)
+
 	# Write JSON data to local .json file
-	print(type(json.dumps(data)))
-	pprint.pprint(data)
+	pprint.pprint(data, file)
 
 	#pprint.pprint(json.dumps(data))
 	file.close()
 	print("Download Finished!")
 	return
 
+
 if __name__ == '__main__':
-	get_groups()
+	get_all_groups()

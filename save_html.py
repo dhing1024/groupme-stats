@@ -1,10 +1,13 @@
 import json
 import pandas as pd
 from datetime import datetime, timedelta, date
+import os
 
 
 # Load the configuration variables
 configs = json.load(open('config.json', 'r'))
+fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
+
 now = datetime.now()
 thirty_days = datetime.now() - timedelta(days = 30)
 six_months = datetime.now() - timedelta(days = 180)
@@ -133,7 +136,10 @@ def output_to_html(dataset, fileName, images = False):
         table_html = table_html.replace("&lt;img&gt;", "</br></br><img src = \"")
         table_html = table_html.replace("&lt;/img&gt;", "\" width = \"55%\" ></a></br></br>")
 
-    file = open(configs['path'] + '/' + fileName, 'w')
+    if not os.path.exists(fullPath):
+        os.makedirs(fullPath)
+
+    file = open(fullPath + '/' + fileName, 'w')
     file.truncate(0)
     file.write(html_string.format(table = table_html))
     file.close()
@@ -148,7 +154,7 @@ def select_columns(df):
 
 
 # Load the saved JSON data to the notebook
-messageFile = configs['path'] + '/messages.json'
+messageFile = configs['path'] + '/' + configs['groupme-id'] + '/messages.json'
 messages = json.load(open(messageFile, 'r'))
 print(len(messages), " messages loaded")
 
@@ -200,10 +206,6 @@ for i in range(len(user_id_list)):
     users.loc[user_id_list[i], 'likes_given_total'] = dataset['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
 
 users.sort_values(by = 'num_messages', inplace = True, ascending = False)
-
-
-
-# Output to HTML Files
 
 
 # Outputs
