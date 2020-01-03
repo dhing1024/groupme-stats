@@ -1,3 +1,5 @@
+import json
+
 from groups import get_all_groups
 from messages import get_messages, save_html
 
@@ -5,9 +7,10 @@ def main():
 
 	# Load the configuration variables
 	configs = json.load(open('config.json', 'r'))
-	token = configs['token']
+	TOKEN = configs['token']
+	PATH = configs['path']
 
-	groups = get_all_groups(token)
+	groups = get_all_groups(TOKEN, outputFile = PATH + "/groups.json")
 	print(groups)
 	get_messages()
 	save_html()
