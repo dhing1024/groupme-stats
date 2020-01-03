@@ -112,7 +112,10 @@ class MessageGroup(object):
 		info['Latest Message Sender'] = self.dataset.iloc[len(self.dataset.index) - 1]['name']
 		return info
 
-	def filter_timedate_range(self, start = min(self.dataset.index), end = datetime.now()):
+	def senders(self):
+		return self.dataset['sender_id'].unique()
+
+	def filter_timedate_range(self, start, end = datetime.now()):
 		dataset = self.dataset
 		dataset = dataset.sort_index(ascending=True)
 		dataset = dataset.loc[dataset.index > start]
