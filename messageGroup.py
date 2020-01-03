@@ -10,7 +10,7 @@ class MessageGroup(object):
 	# Constructor class
 	def __init__(self, name, dataset = pd.DataFrame()):
 		self.name = name
-		self.dataset = dataset.sort_index()
+		self.dataset = dataset
 
 	# PUBLIC METHODS
 
@@ -100,6 +100,9 @@ class MessageGroup(object):
 		file.close()
 		return
 
+	def to_json(self, path = None):
+		return self.dataset.to_json(path_or_buf = path, orient = 'records')
+
 	def info(self):
 		info = {}
 		info['Name'] = self.name
@@ -114,6 +117,19 @@ class MessageGroup(object):
 
 	def senders(self):
 		return self.dataset['sender_id'].unique()
+
+	def senders_names(self):
+		return self.dataset['name'].unique()
+
+	def get_name_from_id(self, id):
+		messages = self.dataset[self.dataset['sender_id'] == id].sort_index(ascending = False)
+		return messages.iloc[0]['name']
+
+	def timesort(self, ascending = True):
+		if ascending == True:
+			return MessageGroup(self.name, self.dataset.sort_index(ascending = True))
+		else:
+			return MessageGroup(self.name, self.dataset.sort_index(ascending = False))
 
 	def filter_timedate_range(self, start, end = datetime.now()):
 		dataset = self.dataset
