@@ -131,6 +131,12 @@ class MessageGroup(object):
 		else:
 			return MessageGroup(self.name, self.dataset.sort_index(ascending = False))
 
+	def likesort(self, ascending = False):
+		if ascending == False:
+			return MessageGroup(self.name, self.dataset.sort_values('likes', ascending = False))
+		else:
+			return MessageGroup(self.name, self.dataset.sort_values('likes', ascending = True))
+
 	def filter_timedate_range(self, start, end = datetime.now()):
 		dataset = self.dataset
 		dataset = dataset.sort_index(ascending=True)
