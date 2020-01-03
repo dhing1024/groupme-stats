@@ -8,8 +8,9 @@ from datetime import datetime, timedelta, date
 class MessageGroup(object):
 
 	# Constructor class
-	def __init__(self, dataset = pd.DataFrame()):
-		self.dataset = dataset
+	def __init__(self, name, dataset = pd.DataFrame()):
+		self.name = name
+		self.dataset = dataset.sort_index()
 
 	# PUBLIC METHODS
 
@@ -17,9 +18,9 @@ class MessageGroup(object):
 	def from_groupme_id(cls, token, groupme_id, outputFile = None, verbose = False):
 		json_data = cls.__get_messages(token, groupme_id, outputFile = outputFile, verbose = verbose)
 		dataset = cls.__messages_to_pandas(cls, json_data)
-		return cls(dataset)
+		return cls(groupme_id, dataset)
 
-	def to_html(self, fileName, columns = [], images = True):
+	def to_html(self, fileName, images = True):
 
 		html_string = '''
 		<html>
@@ -99,8 +100,26 @@ class MessageGroup(object):
 		file.close()
 		return
 
-	def absorb(message_group_object):
+	def get_info(self):
+		info = {}
+		info['Name'] = self.name
+		info['Earliest Message'] = self.dataset.iloc[0].name.isoformat()
+		info['Number of Messages'] = len(self.dataset.index)
+		info['Number of Unique Senders'] = self.dataset['sender_id'].nunique()
+		info['Average Message Length'] = self.dataset['text'].apply(lambda x : len(x)).mean()
+		info['Stdev Message Length'] = self.dataset['text'].apply(lambda x : len(x)).std()
+		info['Latest Message'] = self.dataset.iloc[len(self.dataset.index) - 1]['text']
+		info['Latest Message Sender'] = self.dataset.iloc[len(self.dataset.index) - 1]['name']
+		return info
 
+	def filter_timedate_range(self, start, end):
+		return
+
+	def filter_userid(self, user_id):
+		return
+
+	def __add__(self, message_group_object):
+		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
 
 	# PRIVATE METHODS
 
