@@ -7,27 +7,24 @@ from datetime import datetime, timedelta, date
 
 
 # Save to a messages.json
-def get_messages():
-	# Load the configuration variables
-	configs = json.load(open('config.json', 'r'))
-
-	# Declare variables
-	token = configs['token']
-	pageSize = 100
-	oldestID = -1
+def get_messages(token, groupme_id, outputFile = None, verbose = False):
 
 	# Request parameters
 	server = 'api.groupme.com'
-	path = '/v3/groups/' + configs['groupme-id'] + '/messages'
+	path = '/v3/groups/' + groupme_id + '/messages'
 	connection = client.HTTPSConnection(server)
 
 	# Helper function for reading the id by index in the response
 	def getMessageIDbyIndex(messages, index):
 		return messages[index]['id']
 
+	if verbose:
+		print("Downloading GroupMe messages for GroupMe ID " + groupme_id)
+
 	# Loop through pages of GroupMe messages using the GroupMe developer's API
 	data = []
-	print("Beginning Download...")
+	oldestID = -1
+	pageSize = 100
 	while True:
 
 		params = '?'+ 'token=' + token + '&limit=' + str(pageSize)
@@ -42,20 +39,12 @@ def get_messages():
 		data.extend(messages)
 		oldestID = getMessageIDbyIndex(messages,-1)
 
-
-	# Open output file
-	fullPath = configs['path'] + '/' + configs['groupme-id']
-	if not os.path.exists(fullPath):
-		os.makedirs(fullPath)
-
-	fileName = fullPath + '/messages.json'
-	file = open(fileName, 'w')
-	file.truncate(0)
-
-	# Write JSON data to local .json file
-	file.write(json.dumps(data))
-	file.close()
-	print("Download Finished!")
+	if outputFile is not None:
+		file = open(outputFile, 'w')
+		file.truncate(0)
+		file.write(json.dumps(data))
+		file.close()
+	return data
 
 # Count the number of attached images
 def count_img(x):
@@ -107,9 +96,7 @@ def remove_nan(x):
         return ""
 
 # Save dataframe to html
-def output_to_html(dataset, fileName, images = False):
-	configs = json.load(open('config.json', 'r'))
-	fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
+def output_to_html(dataset, fileName, images = True):
 
 	html_string = '''
 	<html>
@@ -181,17 +168,14 @@ def output_to_html(dataset, fileName, images = False):
 		table_html = table_html.replace("&lt;img&gt;", "</br></br><img src = \"")
 		table_html = table_html.replace("&lt;/img&gt;", "\" width = \"55%\" ></a></br></br>")
 
-	if not os.path.exists(fullPath):
-		os.makedirs(fullPath)
-
-	file = open(fullPath + '/' + fileName, 'w')
+	file = open(fileName, 'w')
 	file.truncate(0)
 	file.write(html_string.format(table = table_html))
 	file.close()
 	return
 
 # Save individual html files for each user
-def save_html():
+def save_html(messages, outputPath):
 
 	# Load the configuration variables
 	configs = json.load(open('config.json', 'r'))
@@ -204,18 +188,13 @@ def save_html():
 	first_year = datetime(2017, 1, 1, 0, 0, 0, 0)
 
 	# Helper function for selecting the appropriate columns
-
 	def select_columns(df):
 		columns = ['name', 'message', 'likes', 'liked_by', 'loc']
 		df = df[columns]
 		return df
 
-
 	# Load the saved JSON data to the notebook
-	messageFile = configs['path'] + '/' + configs['groupme-id'] + '/messages.json'
-	messages = json.load(open(messageFile, 'r'))
-	print(len(messages), " messages loaded")
-
+	print(len(messages), "messages loaded")
 
 	# Read the messages into a pandas dataframe, setting the index as the unique message id
 	df = pd.read_json(json.dumps(messages) )
@@ -223,9 +202,6 @@ def save_html():
 	df['timestamp_utc'] = df['created_at']
 	df.set_index('timestamp_utc', inplace = True)
 	df.rename(columns = {"favorited_by" : "liked_by"}, inplace = True)
-
-
-
 
 	# Generate new columns using the helper functions
 	df['likes'] = df['liked_by'].apply(lambda x : len(x))
@@ -236,12 +212,8 @@ def save_html():
 
 	df.loc[df['text'].isnull(), 'text'] = ""
 	df['message'] = df['text'] + df['img_urls'].apply(lambda x : print_img_urls(x) )
-
 	df['msg_ln'] = df['text'].apply(lambda x : len(x))
 	dataset = df
-
-
-
 
 	# Get Unique sender IDs
 	users = dataset.sort_values(by = 'created_at', ascending = True).groupby(['sender_id'])['name'].unique().apply(list).to_frame()
@@ -254,8 +226,8 @@ def save_html():
 	users['msg_ln_mean'] = dataset.groupby(['sender_id'])['msg_ln'].mean()
 	users['msg_ln_stddev'] = dataset.groupby(['sender_id'])['msg_ln'].std()
 	users['num_messages'] = dataset.groupby(['sender_id']).apply(len)
-	users['num_messages_past6months'] = dataset[ dataset.index > six_months ].groupby(['sender_id']).apply(len)
-	users['num_messages_firstyear'] = dataset[ dataset.index < first_year ].groupby(['sender_id']).apply(len)
+	#users['num_messages_past6months'] = dataset[ dataset.index > six_months ].groupby(['sender_id']).apply(len)
+	#users['num_messages_firstyear'] = dataset[ dataset.index < first_year ].groupby(['sender_id']).apply(len)
 
 	for i in range(len(user_id_list)):
 	    users.loc[user_id_list[i], 'likes_given_past6months'] = dataset[ dataset.index > six_months ]['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
@@ -267,16 +239,16 @@ def save_html():
 
 
 	# Outputs
-	output_to_html(select_columns(dataset.sort_values(by = 'created_at')), 'messages.html', images = True)
-	output_to_html(select_columns(dataset.sort_values(by = 'likes', ascending = False).head(250)), 'most_liked_messages.html', images = True)
-	output_to_html(select_columns(dataset[ dataset['imgs'] > 0 ].sort_values(by = 'likes', ascending = False).head(150)), 'most_liked_images.html', images = True)
+	output_to_html(select_columns(dataset.sort_values(by = 'created_at')), outputPath + '/messages.html', images = True)
+	output_to_html(select_columns(dataset.sort_values(by = 'likes', ascending = False).head(250)), outputPath + '/most_liked_messages.html', images = True)
+	output_to_html(select_columns(dataset[ dataset['imgs'] > 0 ].sort_values(by = 'likes', ascending = False).head(150)), outputPath + '/most_liked_images.html', images = True)
 
 	users = dataset.sort_values(by = 'created_at', ascending = True).groupby(['sender_id'])['name'].unique().apply(list).to_frame()
 	user_id_list = users.index.values
 
 	for id in user_id_list:
 	    user_name = users.at[id, 'name'][-1].replace('/', '_')
-	    output_to_html(select_columns(dataset[ dataset['sender_id'] == id ].sort_values(by = 'likes', ascending = False)), user_name + '_messages.html', images = True)
+	    output_to_html(select_columns(dataset[ dataset['sender_id'] == id ].sort_values(by = 'likes', ascending = False)), outputPath + "/" + user_name + '_messages.html', images = True)
 
 if __name__ == '__main__':
 	get_messages()
