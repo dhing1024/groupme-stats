@@ -141,6 +141,9 @@ class MessageGroup(object):
 	def filter_senders(self, user_id):
 		return MessageGroup(self.name, self.dataset[self.dataset['sender_id'] == user_id])
 
+	def liked_by(self, user_id):
+		return self.dataset[self.dataset['liked_by'].apply(lambda x : user_id in x)]
+
 	def __add__(self, message_group_object):
 		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
 
