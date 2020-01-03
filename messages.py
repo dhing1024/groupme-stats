@@ -215,29 +215,6 @@ def save_html(messages, outputPath):
 	df['msg_ln'] = df['text'].apply(lambda x : len(x))
 	dataset = df
 
-	# Get Unique sender IDs
-	users = dataset.sort_values(by = 'created_at', ascending = True).groupby(['sender_id'])['name'].unique().apply(list).to_frame()
-	user_id_list = users.index.values
-
-	users['orig_name'] = users['name'].apply(lambda x : x[0])
-	users['num_names'] = users['name'].apply(len)
-	users.sort_values(by = 'num_names', inplace = True, ascending = False)
-
-	users['msg_ln_mean'] = dataset.groupby(['sender_id'])['msg_ln'].mean()
-	users['msg_ln_stddev'] = dataset.groupby(['sender_id'])['msg_ln'].std()
-	users['num_messages'] = dataset.groupby(['sender_id']).apply(len)
-	#users['num_messages_past6months'] = dataset[ dataset.index > six_months ].groupby(['sender_id']).apply(len)
-	#users['num_messages_firstyear'] = dataset[ dataset.index < first_year ].groupby(['sender_id']).apply(len)
-
-	for i in range(len(user_id_list)):
-	    users.loc[user_id_list[i], 'likes_given_past6months'] = dataset[ dataset.index > six_months ]['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
-
-	for i in range(len(user_id_list)):
-	    users.loc[user_id_list[i], 'likes_given_total'] = dataset['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
-
-	users.sort_values(by = 'num_messages', inplace = True, ascending = False)
-
-
 	# Outputs
 	output_to_html(select_columns(dataset.sort_values(by = 'created_at')), outputPath + '/messages.html', images = True)
 	output_to_html(select_columns(dataset.sort_values(by = 'likes', ascending = False).head(250)), outputPath + '/most_liked_messages.html', images = True)
