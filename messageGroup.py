@@ -100,7 +100,7 @@ class MessageGroup(object):
 		file.close()
 		return
 
-	def get_info(self):
+	def info(self):
 		info = {}
 		info['Name'] = self.name
 		info['Earliest Message'] = self.dataset.iloc[0].name.isoformat()
@@ -112,11 +112,15 @@ class MessageGroup(object):
 		info['Latest Message Sender'] = self.dataset.iloc[len(self.dataset.index) - 1]['name']
 		return info
 
-	def filter_timedate_range(self, start, end):
-		return
+	def filter_timedate_range(self, start = min(self.dataset.index), end = datetime.now()):
+		dataset = self.dataset
+		dataset = dataset.sort_index(ascending=True)
+		dataset = dataset.loc[dataset.index > start]
+		dataset = dataset.loc[dataset.index < end]
+		return MessageGroup(self.name, dataset)
 
-	def filter_userid(self, user_id):
-		return
+	def filter_senders(self, user_id):
+		return MessageGroup(self.name, self.dataset[self.dataset['sender_id'] == user_id])
 
 	def __add__(self, message_group_object):
 		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
