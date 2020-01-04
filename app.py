@@ -1,9 +1,14 @@
 import json
 import os
 import routines
+import argparse
 
 from groups import get_all_groups
 from messageGroup import MessageGroup
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--test", help = "Test Program", action = "store_true")
+args = parser.parse_args()
 
 def main():
 
@@ -17,8 +22,11 @@ def main():
 
 	groups = get_all_groups(TOKEN, outputFile = PATH + "/groups.json")
 	group_ids = groups.keys()
-	for id in group_ids:
 
+	if args.test:
+		group_ids = ['47833867']
+
+	for id in group_ids:
 		message_output = PATH + "/" + groups[id]
 		if not os.path.exists(message_output):
 			os.makedirs(message_output)
@@ -31,8 +39,8 @@ def execute_routines(mg, output, configs):
 	TOKEN = configs['token']
 	PATH = configs['path']
 
-	routines.routine_one(mg, output)
-	routines.routine_two(mg, output)
+	routines.dump_group_level_data(mg, output)
+	routines.dump_user_data(mg, output)
 	routines.routine_three(mg, output)
 
 	return
