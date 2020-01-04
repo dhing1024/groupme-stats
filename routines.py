@@ -10,6 +10,9 @@ def routine_one(mg, output):
 	mg.timesort(ascending = False).to_json(output + "/messages_reversed.json")
 
 	json.dump(mg.info(), open(output + "/info.json", 'w'))
+	return
+
+def routine_two(mg, output):
 
 	user_data_output = output + "/user_data"
 	if not os.path.exists(user_data_output):
@@ -19,4 +22,8 @@ def routine_one(mg, output):
 	for item in senders:
 		mg.filter_senders(item).to_html(user_data_output + "/" + mg.get_name_from_id(item).replace("/", "-") + ".html")
 
+	return
+
+def routine_three(mg, output):
+	
 	return

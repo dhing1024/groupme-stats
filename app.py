@@ -24,7 +24,7 @@ def main():
 			os.makedirs(message_output)
 
 		mg = MessageGroup.from_groupme_id(TOKEN, id)
-		execute_routines(mg, output, configs)
+		execute_routines(mg, message_output, configs)
 
 def execute_routines(mg, output, configs):
 	configs = json.load(open('config.json', 'r'))
@@ -32,6 +32,8 @@ def execute_routines(mg, output, configs):
 	PATH = configs['path']
 
 	routines.routine_one(mg, output)
+	routines.routine_two(mg, output)
+	routines.routine_three(mg, output)
 
 	return
 
