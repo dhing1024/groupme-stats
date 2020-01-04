@@ -11,7 +11,7 @@ class MessageGroup(object):
 	def __init__(self, name, dataset = pd.DataFrame()):
 		self.name = name
 		self.dataset = dataset
-		self.__form_likes_matrix()
+		self.likes_matrix = None
 
 	# PUBLIC METHODS
 
@@ -156,6 +156,11 @@ class MessageGroup(object):
 
 	def liked_by(self, user_id):
 		return MessageGroup(self.name, self.dataset[self.dataset['liked_by'].apply(lambda x : user_id in x)])
+
+	def get_likes_matrix(self):
+		if self.likes_matrix == None:
+			self.__form_likes_matrix()
+		return self.likes_matrix
 
 	def __add__(self, message_group_object):
 		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
