@@ -11,6 +11,7 @@ class MessageGroup(object):
 	def __init__(self, name, dataset = pd.DataFrame()):
 		self.name = name
 		self.dataset = dataset
+		self.__form_likes_matrix()
 
 	# PUBLIC METHODS
 
@@ -115,6 +116,12 @@ class MessageGroup(object):
 		info['Latest Message Sender'] = self.dataset.iloc[len(self.dataset.index) - 1]['name']
 		return info
 
+	def num_messages(self, sender_id = 'all'):
+		if sender_id == 'all':
+			return len(self.dataset.index)
+		else:
+			return len(self.dataset[self.dataset['sender_id'] == sender_id].index)
+
 	def senders(self):
 		return self.dataset['sender_id'].unique()
 
@@ -148,7 +155,7 @@ class MessageGroup(object):
 		return MessageGroup(self.name, self.dataset[self.dataset['sender_id'] == user_id])
 
 	def liked_by(self, user_id):
-		return self.dataset[self.dataset['liked_by'].apply(lambda x : user_id in x)]
+		return MessageGroup(self.name, self.dataset[self.dataset['liked_by'].apply(lambda x : user_id in x)])
 
 	def __add__(self, message_group_object):
 		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
@@ -274,6 +281,17 @@ class MessageGroup(object):
 	    for i in range(len(x)):
 	        data += "<a>" + x[i] + "</a>" + "<img>" + x[i] + "</img>"
 	    return data
+
+	def __form_likes_matrix(self):
+		userIDs = self.senders()
+		likes_matrix = pd.DataFrame(index = userIDs)
+		likes_matrix.index.name = 'sender_id'
+		numMess = pd.Series({id: self.num_messages(sender_id = id) for id in userIDs})
+
+		for id in userIDs:
+			likes_matrix[id] = likes_matrix.index.map(lambda x : len(self.dataset[(self.dataset['sender_id'] == x) & (self.dataset['liked_by'].apply(lambda y : id in y))].index))
+		likes_matrix = likes_matrix.divide(numMess, axis = 0)
+		self.likes_matrix = likes_matrix
 
 	# Save
 	def save_html(messages, outputPath):
