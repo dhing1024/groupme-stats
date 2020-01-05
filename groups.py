@@ -3,8 +3,9 @@ from http import client
 import os
 import requests
 import pprint
+import pandas as pd
 
-def get_all_groups(token, outputFile = None):
+def get_all_groups(token, outputFile = None, sortby = 'None', ascending = False):
 
 	# Request parameters
 	server = 'api.groupme.com'
@@ -29,9 +30,8 @@ def get_all_groups(token, outputFile = None):
 		groups = response.json()['response']
 		for i in range(len(groups)):
 			newData = {groups[i]['group_id'] : groups[i]['name']}
-			dict[groups[i]['group_id']] = groups[i]['name']
+			dict[groups[i]['group_id']] = [groups[i]['name'], groups[i]['messages']['count']]
 			data.append(newData)
-
 		pageNum += 1
 
 	# Create new file and write to local file
@@ -41,5 +41,11 @@ def get_all_groups(token, outputFile = None):
 		pprint.pprint(data, file)
 		file.close()
 
+	retval = pd.DataFrame.from_dict(dict, orient = 'index')
+	retval.rename(columns = { 0 : 'name', 1 : 'num_messages'}, inplace = True)
+
+	if sortby is not None:
+		retval.sort_values(sortby, ascending = ascending, inplace = True)
+
 	print("Download Finished!")
-	return dict
+	return retval
