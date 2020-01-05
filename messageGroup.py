@@ -12,6 +12,7 @@ class MessageGroup(object):
 		self.name = name
 		self.dataset = dataset
 		self.likes_matrix = None
+		self.user_data = None
 
 	# PUBLIC METHODS
 
@@ -162,13 +163,17 @@ class MessageGroup(object):
 			self.__form_likes_matrix()
 		return self.likes_matrix
 
+	def get_user_data(self):
+		if self.user_data == None:
+			self.__form_user_data()
+		return self.user_data
+
 	def __add__(self, message_group_object):
 		return MessageGroup(self.name + " " + message_group_object.name, pd.concat([self.dataset, message_group_object.dataset]))
 
 	# PRIVATE METHODS
 
 	def __get_messages(token, groupme_id, outputFile = None, verbose = False):
-		print("Getting messages")
 
 		# Request parameters
 		server = 'api.groupme.com'
@@ -224,9 +229,6 @@ class MessageGroup(object):
 			columns = ['name', 'message', 'likes', 'liked_by', 'loc']
 			df = df[columns]
 			return df
-
-		# Load the saved JSON data to the notebook
-		print(len(messages), "messages loaded")
 
 		# Read the messages into a pandas dataframe, setting the index as the unique message id
 		df = pd.read_json(json.dumps(messages) )
@@ -298,6 +300,41 @@ class MessageGroup(object):
 		likes_matrix = likes_matrix.divide(numMess, axis = 0)
 		self.likes_matrix = likes_matrix
 
+	def __form_user_data(self):
+
+		now = datetime.now()
+		six_months = now - timedelta(days = 180)
+		now = datetime.now()
+		thirty_days = datetime.now() - timedelta(days = 30)
+		six_months = datetime.now() - timedelta(days = 180)
+		last_year = datetime.now() - timedelta(days = 365)
+		first_year = self.dataset.iloc[0].name + timedelta(days = 365)
+
+		# Get Unique sender IDs
+		users = self.dataset.sort_values(by = 'created_at', ascending = True).groupby(['sender_id'])['name'].unique().apply(list).to_frame()
+		user_id_list = users.index.values
+
+		users['orig_name'] = users['name'].apply(lambda x : x[0])
+		users['latest_name'] = users['name'].apply(lambda x : x[-1])
+		users['num_names'] = users['name'].apply(len)
+		users.sort_values(by = 'num_names', inplace = True, ascending = False)
+
+		users['msg_ln_mean'] = self.dataset.groupby(['sender_id'])['msg_ln'].mean()
+		users['msg_ln_stddev'] = self.dataset.groupby(['sender_id'])['msg_ln'].std()
+		users['num_messages'] = self.dataset.groupby(['sender_id']).apply(len)
+		users['num_messages_past6months'] = self.dataset[ self.dataset.index > six_months ].groupby(['sender_id']).apply(len) if len(self.dataset[self.dataset.index > six_months].index) > 0 else 0
+		users['num_messages_firstyear'] = self.dataset[ self.dataset.index < first_year ].groupby(['sender_id']).apply(len)	if len(self.dataset[self.dataset.index < first_year].index) > 0 else 0
+
+		for i in range(len(user_id_list)):
+		    users.loc[user_id_list[i], 'likes_given_past6months'] = self.dataset[ self.dataset.index > six_months ]['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
+
+		for i in range(len(user_id_list)):
+		    users.loc[user_id_list[i], 'likes_given_total'] = self.dataset['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
+
+		users.sort_values(by = 'num_messages', inplace = True, ascending = False)
+		self.user_data = users
+		return
+
 	# Save
 	def save_html(messages, outputPath):
 
@@ -316,9 +353,6 @@ class MessageGroup(object):
 			columns = ['name', 'message', 'likes', 'liked_by', 'loc']
 			df = df[columns]
 			return df
-
-		# Load the saved JSON data to the notebook
-		print(len(messages), "messages loaded")
 
 		# Read the messages into a pandas dataframe, setting the index as the unique message id
 		df = pd.read_json(json.dumps(messages) )
