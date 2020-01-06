@@ -8,7 +8,10 @@ from messageGroup import MessageGroup
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--test", help = "Test Program", action = "store_true")
+parser.add_argument("-i", "--id", help = "GroupMe ID", action = "store", nargs = "+")
+parser.add_argument("-f", "--file", help = "Input file", action = "store", nargs = "+")
 args = parser.parse_args()
+print(args)
 
 
 def main():
@@ -20,14 +23,34 @@ def main():
 	if not os.path.exists(PATH):
 		os.makedirs(PATH)
 
+	main_args = {'id' : args.id, 'file' : args.file}
+
 	groups = get_all_groups(TOKEN, outputFile = PATH + "/groups.json", sortby = 'num_messages')
 	group_ids = groups.index
-	arguments = [[id, groups.loc[id, 'name'], TOKEN] for id in group_ids]
+	groups_selected = []
+
+	if args.id is not None:
+		groups_selected.extend(args.id)
+
+	if args.file is not None:
+		new_ids = []
+		for file in args.file:
+			print("Importing File:", args.file)
+			new_ids.extend( open(file, 'r+').readlines())
+		new_ids = [x[0:-1] for x in new_ids]
+		groups_selected.extend(new_ids)
+
 	if args.test:
-		arguments = [['39064704', groups.loc[id, 'name' ] TOKEN]]
+		groups_selected = ['39064704']
+
+	if not any(main_args.values()):
+		groups_selected = group_ids
+
+	print("Groups: ", groups_selected)
+	arguments = [[id, groups.loc[id, 'name'], TOKEN] for id in groups_selected]
 
 	threadNum = cpu_count()
-	print("Number of Groups:", len(group_ids))
+	print("Number of Groups:", len(groups_selected))
 	print("Downloading with", threadNum, "threads")
 	p = Pool(threadNum)
 	ALL_GROUP_DATA = p.map(create_mg, arguments)
