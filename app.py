@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--test", help = "Test Program", action = "store_true")
 parser.add_argument("-i", "--id", help = "GroupMe ID", action = "store", nargs = "+")
 parser.add_argument("-f", "--file", help = "Input file", action = "store", nargs = "+")
+parser.add_argument("-e", "--efile", help = "Exclude file", action = "store", nargs = "+")
 args = parser.parse_args()
 print(args)
 
@@ -23,7 +24,7 @@ def main():
 	if not os.path.exists(PATH):
 		os.makedirs(PATH)
 
-	main_args = {'id' : args.id, 'file' : args.file}
+	main_args = {'id' : args.id, 'file' : args.file, 'test' : args.test}
 
 	groups = get_all_groups(TOKEN, outputFile = PATH + "/groups.json", sortby = 'num_messages')
 	group_ids = groups.index
@@ -45,6 +46,22 @@ def main():
 
 	if not any(main_args.values()):
 		groups_selected = group_ids
+
+	exclude = []
+	if args.efile is not None:
+		ids = []
+		for file in args.efile:
+			print("Importing File:", args.file)
+			ids.extend( open(file, 'r+').readlines())
+		ids = [x[0:-1] for x in ids]
+		exclude = ids
+
+	temp = groups_selected
+	groups_selected = []
+	for i in range(len(temp)):
+		x = temp[i]
+		if x not in exclude:
+			groups_selected.append(x)
 
 	print("Groups: ", groups_selected)
 	arguments = [[id, groups.loc[id, 'name'], TOKEN] for id in groups_selected]
