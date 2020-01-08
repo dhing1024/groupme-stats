@@ -1,6 +1,8 @@
 from messageGroup import MessageGroup
 import json
 import os
+import random
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime, timedelta, date
@@ -19,6 +21,9 @@ def dump_group_level_data(mg, output):
 	mg.users_to_html(output + "/User Data.html", sortby = 'num_messages', ascending = False)
 	mg.filter_timedate_range(start = datetime.now() - timedelta(days = 180)).users_to_html(output + "/User Data (Last 6 Months).html", sortby = 'num_messages_past6months', ascending = False)
 
+
+	crawl_likes_matrix(mg, output + "/Best Content (All Time).html")
+	crawl_likes_matrix(mg.filter_timedate_range(start = datetime.now() - timedelta(days = 365)), output + "/Best Content (Past Year).html")
 	dump_top_likers(mg, output)
 	dump_total_activity(mg, output)
 	dump_sender_activity(mg, output)
@@ -98,6 +103,69 @@ def dump_sender_activity(mg, output):
 	plt.tight_layout()
 	fig.savefig(output + "/Monthly Messages Sent By Top Users")
 	return
+
+def crawl_likes_matrix(mg, output):
+
+	shortmg = mg#.filter_timedate_range(start = datetime.now() - timedelta(days = 180))
+	likes_matrix = shortmg.get_likes_matrix(normalize = False)
+	newDF = pd.DataFrame(index = likes_matrix.index, columns = ['score'])
+	newDF.fillna(value = 0, inplace = True)
+
+	# From any one column, select a value
+	random.seed(69)
+	ids = likes_matrix.columns
+	if len(ids) == 0:
+		file = open(output, 'w')
+		file.truncate(0)
+		users = pd.DataFrame(columns = ['latest_name', 'score', 'num_messages', 'tot_likes', 'likes_per_message'])
+		users = users.to_html( justify = 'left', render_links = True)
+		file.write(users)
+		file.close()
+		return
+
+
+	selected_id = ids[random.randint(0, len(ids) - 1)]
+	i = 0
+	err = 0
+	while True:
+		i = i + 1
+
+		if err == 500:
+			file = open(output, 'w')
+			file.truncate(0)
+			users = pd.DataFrame(columns = ['latest_name', 'score', 'num_messages', 'tot_likes', 'likes_per_message'])
+			users = users.to_html( justify = 'left', render_links = True)
+			file.write(users)
+			file.close()
+			return
+
+		column = likes_matrix[selected_id]
+		if (column == 0).all():
+			selected_id = ids[random.randint(0, len(ids) - 1)]
+			err = err + 1
+			continue
+
+		err = 0
+		selected_id = random.choices(column.index, weights = column.values)[0]
+		newDF.loc[selected_id, 'score'] += 1
+		if newDF.loc[selected_id, 'score'] == 10000:
+			break
+
+	users = shortmg.get_user_data()
+	users = users.join(newDF)
+
+	users = users[['latest_name', 'score', 'num_messages', 'tot_likes']]
+	users['likes_per_message'] = users['tot_likes'] / users['num_messages']
+	users['score'] = users['score'].apply(np.sqrt)
+	users.sort_values(by = 'score', inplace = True, ascending = False)
+	users = users.to_html( justify = 'left', render_links = True)
+
+	file = open(output, 'w')
+	file.truncate(0)
+	file.write(users)
+	file.close()
+
+	return users
 
 # USER LEVEL ROUTINES
 

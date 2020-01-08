@@ -104,6 +104,10 @@ class MessageGroup(object):
 
 	def users_to_html(self, fileName, sortby = 'num_messages', ascending = False):
 		table_html = self.get_user_data()
+
+		if table_html is None:
+			return
+
 		table_html = table_html.drop(labels = ['name', 'orig_name', 'num_names'], axis = 1)
 		table_html = table_html.sort_values(by = sortby, ascending = ascending)
 		table_html = table_html.to_html( justify = 'left', render_links = True)
@@ -169,10 +173,18 @@ class MessageGroup(object):
 	def liked_by(self, user_id):
 		return MessageGroup(self.name, self.dataset[self.dataset['liked_by'].apply(lambda x : user_id in x)])
 
-	def get_likes_matrix(self):
+	def get_likes_matrix(self, normalize = True):
 		if self.likes_matrix == None:
 			self.__form_likes_matrix()
-		return self.likes_matrix
+
+		if normalize == True:
+			return self.likes_matrix
+
+		userIDs = self.senders()
+		numMess = pd.Series({id: self.num_messages(sender_id = id) for id in userIDs})
+		likes_matrix = self.likes_matrix.multiply(numMess, axis = 0)
+		return likes_matrix
+
 
 	def get_user_data(self):
 		if self.user_data is None:
@@ -313,6 +325,9 @@ class MessageGroup(object):
 
 	def __form_user_data(self):
 
+		if self.num_messages() == 0:
+			return None
+
 		now = datetime.now()
 		six_months = now - timedelta(days = 180)
 		now = datetime.now()
@@ -335,7 +350,7 @@ class MessageGroup(object):
 		users['num_messages'] = self.dataset.groupby(['sender_id']).apply(len)
 		users['num_messages_past6months'] = self.dataset[ self.dataset.index > six_months ].groupby(['sender_id']).apply(len) if len(self.dataset[self.dataset.index > six_months].index) > 0 else 0
 		users['num_messages_firstyear'] = self.dataset[ self.dataset.index < first_year ].groupby(['sender_id']).apply(len)	if len(self.dataset[self.dataset.index < first_year].index) > 0 else 0
-
+		users['tot_likes'] = self.dataset[['likes', 'sender_id']].groupby(['sender_id']).apply(sum)['likes']
 		for i in range(len(user_id_list)):
 		    users.loc[user_id_list[i], 'likes_given_past6months'] = self.dataset[ self.dataset.index > six_months ]['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
 
