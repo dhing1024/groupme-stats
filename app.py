@@ -5,6 +5,7 @@ import argparse
 from multiprocessing import Pool, cpu_count
 from groups import get_all_groups
 from messageGroup import MessageGroup
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--test", help = "Test Program", action = "store_true")
@@ -111,4 +112,9 @@ def execute_routines(mg, id, name, output, configs):
 
 
 if __name__ == '__main__':
+	start = time.time()
 	main()
+	end = time.time()
+	elapsed = end - start
+	print("TIME ELAPSED:", elapsed, "seconds")
+	print("Program ending...")

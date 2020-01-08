@@ -123,7 +123,6 @@ def crawl_likes_matrix(mg, output):
 		file.close()
 		return
 
-
 	selected_id = ids[random.randint(0, len(ids) - 1)]
 	i = 0
 	err = 0
@@ -148,7 +147,7 @@ def crawl_likes_matrix(mg, output):
 		err = 0
 		selected_id = random.choices(column.index, weights = column.values)[0]
 		newDF.loc[selected_id, 'score'] += 1
-		if newDF.loc[selected_id, 'score'] == 10000:
+		if newDF.loc[selected_id, 'score'] >= 1600:
 			break
 
 	users = shortmg.get_user_data()
@@ -157,6 +156,7 @@ def crawl_likes_matrix(mg, output):
 	users = users[['latest_name', 'score', 'num_messages', 'tot_likes']]
 	users['likes_per_message'] = users['tot_likes'] / users['num_messages']
 	users['score'] = users['score'].apply(np.sqrt)
+	users['score'] = users['score'] * 2.5
 	users.sort_values(by = 'score', inplace = True, ascending = False)
 	users = users.to_html( justify = 'left', render_links = True)
 
