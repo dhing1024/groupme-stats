@@ -102,6 +102,17 @@ class MessageGroup(object):
 		file.close()
 		return
 
+	def users_to_html(self, fileName, sortby = 'num_messages', ascending = False):
+		table_html = self.get_user_data()
+		table_html = table_html.drop(labels = ['name', 'orig_name', 'num_names'], axis = 1)
+		table_html = table_html.sort_values(by = sortby, ascending = ascending)
+		table_html = table_html.to_html( justify = 'left', render_links = True)
+		file = open(fileName, 'w')
+		file.truncate(0)
+		file.write(table_html)
+		file.close()
+		return
+
 	def to_json(self, path = None):
 		return self.dataset.to_json(path_or_buf = path, orient = 'records')
 
@@ -164,7 +175,7 @@ class MessageGroup(object):
 		return self.likes_matrix
 
 	def get_user_data(self):
-		if self.user_data == None:
+		if self.user_data is None:
 			self.__form_user_data()
 		return self.user_data
 
@@ -215,8 +226,8 @@ class MessageGroup(object):
 	def __messages_to_pandas(self, messages):
 
 		# Load the configuration variables
-		configs = json.load(open('config.json', 'r'))
-		fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
+		#configs = json.load(open('config.json', 'r'))
+		#fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
 
 		now = datetime.now()
 		thirty_days = datetime.now() - timedelta(days = 30)
@@ -331,16 +342,15 @@ class MessageGroup(object):
 		for i in range(len(user_id_list)):
 		    users.loc[user_id_list[i], 'likes_given_total'] = self.dataset['liked_by'].apply(lambda x : user_id_list[i] in x).sum()
 
-		users.sort_values(by = 'num_messages', inplace = True, ascending = False)
-		self.user_data = users
+		self.user_data = users.sort_values(by = 'num_messages', ascending = False)
 		return
 
 	# Save
 	def save_html(messages, outputPath):
 
 		# Load the configuration variables
-		configs = json.load(open('config.json', 'r'))
-		fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
+		#configs = json.load(open('config.json', 'r'))
+		#fullPath = configs['path'] + '/' + configs['groupme-id'] + '/members'
 
 		now = datetime.now()
 		thirty_days = datetime.now() - timedelta(days = 30)
