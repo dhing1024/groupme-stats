@@ -19,12 +19,12 @@ def get_all_groups(token, outputFile = None, sortby = 'None', ascending = False)
 
 		# Send request
 		params = '?'+ 'token=' + token + '&page=' + str(pageNum) + '&omit=memberships'
-		print("Request: " + "https://" + server + path + params, end = '...')
+		print("Request: " + "https://" + server + path + params, end = ' ...')
 		response = requests.get('https://' + server + path + params)
 		if len(response.json()['response']) == 0:
-			print("ending")
+			print("ending (0 items received).")
 			break
-		print("success")
+		print("success with", len(response.json()['response']), "items received.")
 
 		# Add response items data and dict
 		groups = response.json()['response']
