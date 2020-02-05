@@ -10,8 +10,8 @@ from datetime import datetime, timedelta, date
 
 def dump_group_level_data(mg, output):
 
-	mg.to_html(output + "/All Messages.html")
-	mg.to_json(output + "/messages.json")
+	mg.timesort(ascending = True).to_html(output + "/All Messages.html")
+	mg.timesort(ascending = True).to_json(output + "/messages.json")
 	mg.timesort(ascending = False).to_html(output + "/All Messages (Reverse Time Order).html")
 	mg.timesort(ascending = False).to_json(output + "/messages_reversed.json")
 	mg.likesort(ascending = False).to_html(output + "/Most Popular.html")
