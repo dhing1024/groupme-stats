@@ -12,8 +12,8 @@ parser.add_argument("-t", "--test", help = "Test Program", action = "store_true"
 parser.add_argument("-i", "--id", help = "GroupMe ID", action = "store", nargs = "+")
 parser.add_argument("-f", "--file", help = "Input file", action = "store", nargs = "+")
 parser.add_argument("-e", "--efile", help = "Exclude file", action = "store", nargs = "+")
+parser.add_argument("-s", "--setup", help = "Download GroupMe IDs only", action = "store_true")
 args = parser.parse_args()
-print(args)
 
 
 def main():
@@ -30,6 +30,9 @@ def main():
 	groups = get_all_groups(TOKEN, outputFile = PATH + "/groups.json", sortby = 'num_messages')
 	group_ids = groups.index
 	groups_selected = []
+
+	if args.setup is True:
+		return
 
 	if args.id is not None:
 		groups_selected.extend(args.id)
