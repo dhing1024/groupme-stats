@@ -4,7 +4,7 @@
 This program is a script that allows users to download their group message data on GroupMe. The program downloads group messages, performs some some analytics, and generates visualizations of the data.
 
 ## Setup:
-To be able to use this project, you will need to go to the [GroupMe Developer Portal](dev.groupme.com) and obtain an access token:
+To be able to use this project, you will need to go to the [GroupMe Developer Portal](https://dev.groupme.com) and obtain an access token:
 
  - Do so by creating a new application. Call it whatever you would like. Note that in the form for creating the application, a callback url is required by the form but not used by this Python script, so whatever is entered doesn't really matter.
  - Under the application details, copy the string where it says
