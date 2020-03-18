@@ -3,6 +3,12 @@
 ## Overview:
 This program is a script that allows users to download their group message data on GroupMe. The program downloads group messages, performs some some analytics, and generates visualizations of the data.
 
+<img src = "https://user-images.githubusercontent.com/26987971/76921936-a24bf180-68a5-11ea-8e69-410904b8189d.png" width = 500 />
+
+<img src = "https://user-images.githubusercontent.com/26987971/76922076-19818580-68a6-11ea-9437-e29cc976fce2.png" width = 500 />
+
+<img src = "https://user-images.githubusercontent.com/26987971/76922212-6c5b3d00-68a6-11ea-8cc0-c273f1cc8f18.png" width = 500 />
+
 ## Setup:
 To be able to use this project, you will need to go to the [GroupMe Developer Portal](https://dev.groupme.com) and obtain an access token:
 
